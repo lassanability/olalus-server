@@ -1,0 +1,170 @@
+const Blog = require('../models/blog');
+const storage = require('../config/storage');
+
+const getImageUrl = (key) => {
+  if (!key) return null;
+  if (key.startsWith('http')) return key;
+  return `${process.env.SEAWEED_S3_URL}/${process.env.SEAWEED_BUCKET}/${key}`;
+};
+
+exports.getAll = async (req, res) => {
+  try {
+    const { category, tag, search } = req.query;
+    const filter = { published: true };
+
+    if (category) filter.category = { $regex: category, $options: 'i' };
+    if (tag) filter.tags = { $in: [tag] };
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const blogs = await Blog.find(filter).sort({ publishedAt: -1, createdAt: -1 });
+    res.json({ success: true, blogs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getFeatured = async (req, res) => {
+  try {
+    const blogs = await Blog.find({ featured: true, published: true }).sort({ publishedAt: -1 }).limit(6);
+    res.json({ success: true, blogs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getCategories = async (req, res) => {
+  try {
+    const categories = await Blog.distinct('category', { published: true });
+    res.json({ success: true, categories });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getTags = async (req, res) => {
+  try {
+    const blogs = await Blog.find({ published: true }, 'tags');
+    const tags = [...new Set(blogs.flatMap(b => b.tags))];
+    res.json({ success: true, tags });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getByAuthor = async (req, res) => {
+  try {
+    const blogs = await Blog.find({ author: req.params.authorId, published: true }).sort({ publishedAt: -1 });
+    res.json({ success: true, blogs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getById = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+    res.json({ success: true, blog });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.create = async (req, res) => {
+  try {
+    const { title, content, category, author, featured, published, publishedAt, tags, isIndexed, permanentPlacement, homepageVisibilityDays, doFollowLinks } = req.body;
+
+    let imageUrl = '';
+    if (req.file) {
+      const key = `blog/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
+      await storage.uploadFile(req.file.buffer, key, req.file.mimetype);
+      imageUrl = getImageUrl(key);
+    }
+
+    const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags || [];
+    const parsedDoFollow = typeof doFollowLinks === 'string' ? JSON.parse(doFollowLinks) : doFollowLinks;
+
+    const blog = await Blog.create({
+      title, content, image: imageUrl, category, author,
+      featured: featured === 'true' || featured === true,
+      published: published !== 'false' && published !== false,
+      publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
+      tags: parsedTags,
+      isIndexed: isIndexed !== 'false' && isIndexed !== false,
+      permanentPlacement: permanentPlacement === 'true' || permanentPlacement === true,
+      homepageVisibilityDays: Number(homepageVisibilityDays) || 0,
+      doFollowLinks: parsedDoFollow,
+    });
+
+    res.status(201).json({ success: true, blog });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+
+    const { title, content, category, author, featured, published, publishedAt, tags, isIndexed, permanentPlacement, homepageVisibilityDays, doFollowLinks } = req.body;
+
+    if (title !== undefined) blog.title = title;
+    if (content !== undefined) blog.content = content;
+    if (category !== undefined) blog.category = category;
+    if (author !== undefined) blog.author = author;
+    if (featured !== undefined) blog.featured = featured === 'true' || featured === true;
+    if (published !== undefined) blog.published = published === 'true' || published === true;
+    if (publishedAt !== undefined) blog.publishedAt = new Date(publishedAt);
+    if (isIndexed !== undefined) blog.isIndexed = isIndexed === 'true' || isIndexed === true;
+    if (permanentPlacement !== undefined) blog.permanentPlacement = permanentPlacement === 'true' || permanentPlacement === true;
+    if (homepageVisibilityDays !== undefined) blog.homepageVisibilityDays = Number(homepageVisibilityDays);
+    if (tags !== undefined) blog.tags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+    if (doFollowLinks !== undefined) blog.doFollowLinks = typeof doFollowLinks === 'string' ? JSON.parse(doFollowLinks) : doFollowLinks;
+
+    if (req.file) {
+      const key = `blog/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
+      await storage.uploadFile(req.file.buffer, key, req.file.mimetype);
+      blog.image = getImageUrl(key);
+    }
+
+    await blog.save();
+    res.json({ success: true, blog });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.remove = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+
+    const force = req.query.force === 'true';
+    if (blog.permanentPlacement && !force) {
+      return res.status(400).json({ success: false, message: 'This blog has permanent placement. Use force=true to delete.' });
+    }
+
+    await blog.deleteOne();
+    res.json({ success: true, message: 'Blog deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.toggleFeatured = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+    blog.featured = !blog.featured;
+    await blog.save();
+    res.json({ success: true, featured: blog.featured, message: `Blog ${blog.featured ? 'featured' : 'unfeatured'} successfully` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
