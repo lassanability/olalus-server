@@ -196,13 +196,13 @@ const trackSuspiciousActivity = (req, res, next) => {
 const buildCorsOptions = (website, adminDashboard) => ({
   origin: (origin, callback) => {
     const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:5300',
       website,
       adminDashboard,
     ].filter(Boolean);
 
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow all localhost origins in development
+    const isLocalhost = !origin || /^https?:\/\/localhost(:\d+)?$/.test(origin);
+    if (isLocalhost || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
