@@ -18,7 +18,6 @@ if (missingEnv.length > 0) {
 const morgan = require("morgan");
 const { applySecurityMiddleware, buildCorsOptions } = require("./middleware/security");
 const { connectDB } = require("./config/db");
-const { connectRedis } = require("./config/redis");
 const { initSuperAdmin } = require("./config/superAdmin");
 
 const authRoute = require("./routes/auth");
@@ -38,7 +37,6 @@ const contactRoute = require("./routes/contact");
 const physicalExamRoute = require("./routes/physicalExam");
 
 connectDB().then(() => initSuperAdmin());
-connectRedis();
 
 const PORT = process.env.PORT;
 const WEBSITE = process.env.WEBSITE;
@@ -54,12 +52,10 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 applySecurityMiddleware(app);
 
-// Auth
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/admin-users", adminUserRoute);
 app.use("/api/v1/logs", logRoute);
 
-// Content
 app.use("/api/v1/banner", bannerRoute);
 app.use("/api/v1/services", serviceRoute);
 app.use("/api/v1/waiver", waiverRoute);

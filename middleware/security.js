@@ -200,10 +200,9 @@ const buildCorsOptions = (website, adminDashboard) => ({
       adminDashboard,
     ].filter(Boolean);
 
-    // Allow all localhost origins in development
     const isLocalhost = !origin || /^https?:\/\/localhost(:\d+)?$/.test(origin);
     if (isLocalhost || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      callback(null, origin || true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
