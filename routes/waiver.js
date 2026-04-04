@@ -1,11 +1,11 @@
 const router = require('express').Router();
-const { validateDashboard } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 const ctrl = require('../controllers/waiver');
 
 router.get('/', ctrl.getAll);
 router.get('/:id', ctrl.getById);
-router.post('/', validateDashboard, ctrl.create);
-router.put('/:id', validateDashboard, ctrl.update);
-router.delete('/:id', validateDashboard, ctrl.remove);
+router.post('/', requireAuth, requireRole('waiver'), ctrl.create);
+router.put('/:id', requireAuth, requireRole('waiver'), ctrl.update);
+router.delete('/:id', requireAuth, requireRole('waiver'), ctrl.remove);
 
 module.exports = router;

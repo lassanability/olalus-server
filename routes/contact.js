@@ -1,10 +1,10 @@
 const router = require('express').Router();
-const { validateDashboard } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 const ctrl = require('../controllers/contact');
 
-router.post('/', ctrl.submit);
-router.get('/', validateDashboard, ctrl.getAll);
-router.patch('/:id/read', validateDashboard, ctrl.markRead);
-router.delete('/:id', validateDashboard, ctrl.remove);
+router.post('/', ctrl.create);
+router.get('/', requireAuth, requireRole('contacts'), ctrl.getAll);
+router.patch('/:id/read', requireAuth, requireRole('contacts'), ctrl.markRead);
+router.delete('/:id', requireAuth, requireRole('contacts'), ctrl.remove);
 
 module.exports = router;

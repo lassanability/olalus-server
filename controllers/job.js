@@ -65,11 +65,22 @@ exports.remove = async (req, res) => {
 
 exports.apply = async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, position, message } = req.body;
+    const {
+      firstName, lastName, email, phone, position, message,
+      personalInfo, employmentDesired, education, workExperience,
+      additionalQuestions, references, waiver,
+    } = req.body;
+
     if (!firstName || !lastName || !email || !position) {
       return res.status(400).json({ success: false, message: 'First name, last name, email and position are required' });
     }
-    const application = await Application.create({ firstName, lastName, email, phone, position, message });
+
+    const application = await Application.create({
+      firstName, lastName, email, phone, position, message,
+      personalInfo, employmentDesired, education, workExperience,
+      additionalQuestions, references, waiver,
+    });
+
     res.status(201).json({ success: true, message: 'Application submitted successfully', data: application });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

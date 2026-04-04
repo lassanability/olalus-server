@@ -7,6 +7,7 @@ require("dotenv").config({ path: ".env" });
 const REQUIRED_ENV = [
   'PORT', 'MONGO_CONNECTION_URL',
   'SEAWEED_S3_URL', 'SEAWEED_BUCKET', 'SEAWEED_ACCESS_KEY', 'SEAWEED_SECRET_KEY',
+  'JWT_SECRET', 'ADMIN_EMAIL',
 ];
 const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missingEnv.length > 0) {
@@ -18,7 +19,12 @@ const morgan = require("morgan");
 const { applySecurityMiddleware, buildCorsOptions } = require("./middleware/security");
 const { connectDB } = require("./config/db");
 const { connectRedis } = require("./config/redis");
+const { initSuperAdmin } = require("./config/superAdmin");
 
+const authRoute = require("./routes/auth");
+const adminUserRoute = require("./routes/adminUser");
+const commentRoute = require("./routes/comment");
+const logRoute = require("./routes/log");
 const bannerRoute = require("./routes/banner");
 const serviceRoute = require("./routes/service");
 const waiverRoute = require("./routes/waiver");
@@ -29,8 +35,9 @@ const jobRoute = require("./routes/job");
 const resourceRoute = require("./routes/resource");
 const blogRoute = require("./routes/blog");
 const contactRoute = require("./routes/contact");
+const physicalExamRoute = require("./routes/physicalExam");
 
-connectDB();
+connectDB().then(() => initSuperAdmin());
 connectRedis();
 
 const PORT = process.env.PORT;
@@ -46,6 +53,12 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 applySecurityMiddleware(app);
 
+// Auth
+app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/admin-users", adminUserRoute);
+app.use("/api/v1/logs", logRoute);
+
+// Content
 app.use("/api/v1/banner", bannerRoute);
 app.use("/api/v1/services", serviceRoute);
 app.use("/api/v1/waiver", waiverRoute);
@@ -56,6 +69,8 @@ app.use("/api/v1/jobs", jobRoute);
 app.use("/api/v1/resources", resourceRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/contact", contactRoute);
+app.use("/api/v1/comments", commentRoute);
+app.use("/api/v1/physical-exam", physicalExamRoute);
 
 app.get("/", (req, res) => {
   res.status(404).json({ error: "Not Found" });
