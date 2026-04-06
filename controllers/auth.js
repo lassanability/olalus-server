@@ -85,7 +85,6 @@ exports.changePassword = async (req, res) => {
     admin.passwordChangedFromDefault = true;
     await admin.save();
 
-    // Issue fresh token with updated passwordChangedFromDefault
     const token = signToken(admin);
 
     await logActivity(req.admin, 'changePassword', 'auth', String(admin._id), 'Password changed');

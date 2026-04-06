@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const ALL_ROLES = ['banner', 'services', 'waiver', 'partners', 'testimonials', 'faq', 'jobs', 'resources', 'blog', 'contacts', 'comments'];
+const ALL_ROLES = ['banner', 'about', 'services', 'waiver', 'partners', 'testimonials', 'faq', 'jobs', 'resources', 'blog', 'contacts', 'comments', 'appointments'];
 
 const adminUserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },

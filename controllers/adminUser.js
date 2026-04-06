@@ -53,7 +53,6 @@ exports.update = async (req, res) => {
     const admin = await AdminUser.findById(req.params.id);
     if (!admin) return res.status(404).json({ success: false, message: 'Admin not found' });
 
-    // Super admin cannot be edited by this route (protect the special account)
     if (admin.email === SUPER_ADMIN_EMAIL) {
       return res.status(403).json({ success: false, message: 'Super admin cannot be modified via this route' });
     }

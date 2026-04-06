@@ -63,7 +63,7 @@ exports.approve = async (req, res) => {
     if (!c) return res.status(404).json({ success: false, message: 'Comment not found' });
 
     c.status = 'approved';
-    c.expiresAt = undefined; // Unset TTL — approved comments never auto-delete
+    c.expiresAt = undefined;
     await c.save();
 
     await logActivity(req.admin, 'approve', 'comment', String(c._id), `Approved comment by ${c.name}`);

@@ -35,6 +35,9 @@ const resourceRoute = require("./routes/resource");
 const blogRoute = require("./routes/blog");
 const contactRoute = require("./routes/contact");
 const physicalExamRoute = require("./routes/physicalExam");
+const aboutRoute = require("./routes/about");
+const appointmentRoute = require("./routes/appointment");
+const chatRoute = require("./routes/chat");
 
 connectDB().then(() => initSuperAdmin());
 
@@ -68,6 +71,9 @@ app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/contact", contactRoute);
 app.use("/api/v1/comments", commentRoute);
 app.use("/api/v1/physical-exam", physicalExamRoute);
+app.use("/api/v1/about", aboutRoute);
+app.use("/api/v1/appointments", appointmentRoute);
+app.use("/api/v1/chat", chatRoute);
 
 app.get("/", (req, res) => {
   res.status(404).json({ error: "Not Found" });
