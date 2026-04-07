@@ -22,7 +22,7 @@ exports.update = async (req, res) => {
     let about = await About.findOne();
     if (!about) about = new About();
 
-    const { missionHeading, missionParagraphs, visionHeading, visionBullets, branches, communityAvatars, appointmentFeatures, imageField } = req.body;
+    const { missionHeading, missionParagraphs, visionHeading, visionBullets, branches, appointmentFeatures, imageField } = req.body;
 
     if (missionHeading !== undefined) about.missionHeading = missionHeading;
     if (missionParagraphs !== undefined) {
@@ -38,9 +38,6 @@ exports.update = async (req, res) => {
     }
     if (branches !== undefined) {
       about.branches = Array.isArray(branches) ? branches : JSON.parse(branches);
-    }
-    if (communityAvatars !== undefined) {
-      about.communityAvatars = Array.isArray(communityAvatars) ? communityAvatars : JSON.parse(communityAvatars);
     }
     if (appointmentFeatures !== undefined) {
       about.appointmentFeatures = Array.isArray(appointmentFeatures) ? appointmentFeatures : JSON.parse(appointmentFeatures);

@@ -142,7 +142,7 @@ async function checkAndAlert(budget) {
 }
 
 function buildSystemPrompt(site, jobs) {
-  const { company, contact, insuranceAccepted, services, faqs } = site;
+  const { company, contact, insuranceAccepted, services, faqs, websitePages = {} } = site;
   const a = contact.address;
   const addr = `${a.street}, ${a.suite}, ${a.city}, ${a.state} ${a.zip}`;
   const jobList = jobs.map((j, i) => `${i+1}. ${j.title} - ${j.type} | ${j.location}`).join("\n") || "None currently.";
@@ -189,6 +189,14 @@ ${jobList || "No open positions at this time."}
 FREQUENTLY ASKED QUESTIONS:
 ${faqList}
 
+WEBSITE PAGES (use these exact links when directing visitors):
+- Book an Appointment: ${websitePages.bookAppointment || contact.phone}
+- HR / Job Application Form: ${websitePages.hrApplication || contact.phone}
+- Careers Page: ${websitePages.careers || contact.phone}
+- Our Services: ${websitePages.services || contact.phone}
+- Contact Us: ${websitePages.contact || contact.phone}
+- Homepage: ${websitePages.home || contact.phone}
+
 ════════════════════════════════════════
 ANTI-HALLUCINATION RULES — NON-NEGOTIABLE
 ════════════════════════════════════════
@@ -199,9 +207,10 @@ ANTI-HALLUCINATION RULES — NON-NEGOTIABLE
 5. NEVER discuss anything outside of ${company.name} — no politics, health advice, general knowledge, other companies, news, or anything unrelated.
 6. If asked to do something unrelated (write code, tell jokes, etc.): "I'm here specifically to help with ${company.name}'s services and careers. How can I help you with that?"
 7. Emergencies: ALWAYS respond first with "Please call 911 immediately." Then: "For urgent care coordination, call us at ${contact.phone}."
-8. Job applications: direct to our Career page or call ${contact.phone}.
-9. When listing services or positions, copy them EXACTLY as listed above — no paraphrasing, no additions.
-10. If someone pastes a resume, match it ONLY against the open positions listed above. Never mention jobs not on the list.`;
+8. Appointments: always give the direct booking link — ${websitePages.bookAppointment || contact.phone}
+9. Job applications / HR form: always give the direct link — ${websitePages.hrApplication || contact.phone}
+10. When listing services or positions, copy them EXACTLY as listed above — no paraphrasing, no additions.
+11. If someone pastes a resume, match it ONLY against the open positions listed above. Never mention jobs not on the list.`;
 }
 
 async function callAI(systemPrompt, messages, maxTokens) {
@@ -272,13 +281,19 @@ async function matchResume(resumeText, activeJobs, siteContent) {
     try { parsed = JSON.parse(result.text.replace(/```json|```/g,"").trim()); } catch { return keywordMatch(resumeText, activeJobs, siteContent); }
 
     const matched = (parsed.matches||[])
-      .filter(m => m.jobIndex >= 0 && m.jobIndex < activeJobs.length)
+      .filter(m => m.jobIndex >= 0 && m.jobIndex < activeJobs.length && m.score >= 40)
       .map(m => { const j = activeJobs[m.jobIndex]; return { jobId: j._id, title: j.title, matchScore: Math.min(98, Math.max(20, m.score)), department: j.department, location: j.location, type: j.type, reason: m.reason }; })
       .sort((a,b) => b.matchScore - a.matchScore);
 
-    let text = `${parsed.summary}\n\n`;
-    matched.slice(0,5).forEach(m => { text += `${m.matchScore>=85?"🌟":m.matchScore>=70?"✅":"📋"} ${m.title} — ${m.matchScore}% match\n${m.reason}\n\n`; });
-    text += `${parsed.tip||""}\n\nApply via our Career page or call ${siteContent.contact.phone}!`;
+    const wp = siteContent.websitePages || {};
+    let text;
+    if (matched.length === 0) {
+      text = `Thank you for your interest in ${siteContent.company.name}. Based on our current open positions, we don't have a role that matches your profile at this time.\n\nPlease visit our Career page to apply directly or call ${siteContent.contact.phone} — our HR team can let you know about future openings.`;
+    } else {
+      text = `We found ${matched.length} position${matched.length > 1 ? "s" : ""} that match your profile:\n\n`;
+      matched.slice(0,5).forEach(m => { text += `${m.matchScore>=85?"🌟":m.matchScore>=70?"✅":"📋"} ${m.title} — ${m.matchScore}% match\n${m.reason}\n\n`; });
+      text += `To apply, visit our Career page${wp.hrApplication ? ` at ${wp.hrApplication}` : ""} or call ${siteContent.contact.phone}.`;
+    }
     return { text, matchedJobs: matched, fallback: false };
   } catch (err) {
     console.error("Resume match error — using keyword fallback:", err.message);

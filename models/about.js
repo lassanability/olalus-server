@@ -15,7 +15,6 @@ const aboutSchema = new mongoose.Schema({
   visionImage: { type: String, default: '' },
   branches: { type: [branchSchema], default: [] },
   appointmentAvatar: { type: String, default: '' },
-  communityAvatars: { type: [String], default: [] },
   appointmentFeatures: { type: [String], default: [] },
 }, { timestamps: true });
 

@@ -9,7 +9,7 @@ const getImageUrl = (key) => {
 
 exports.getAll = async (req, res) => {
   try {
-    const resources = await Resource.find({ active: true }).sort({ order: 1, createdAt: 1 });
+    const resources = await Resource.find().sort({ createdAt: 1 });
     res.json({ success: true, data: resources });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -28,7 +28,7 @@ exports.getById = async (req, res) => {
 
 exports.getBySlug = async (req, res) => {
   try {
-    const resource = await Resource.findOne({ slug: req.params.slug, active: true });
+    const resource = await Resource.findOne({ slug: req.params.slug });
     if (!resource) return res.status(404).json({ success: false, message: 'Resource not found' });
     res.json({ success: true, data: resource });
   } catch (err) {

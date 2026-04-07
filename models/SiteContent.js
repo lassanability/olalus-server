@@ -56,6 +56,15 @@ const SiteContentSchema = new mongoose.Schema(
     services: [ServiceItemSchema],
     faqs: [FAQItemSchema],
 
+    websitePages: {
+      home:            { type: String, default: "https://olalusgroupllc.com" },
+      bookAppointment: { type: String, default: "https://olalusgroupllc.com/#appointment" },
+      hrApplication:   { type: String, default: "https://olalusgroupllc.com/career/apply" },
+      careers:         { type: String, default: "https://olalusgroupllc.com/career" },
+      services:        { type: String, default: "https://olalusgroupllc.com/services" },
+      contact:         { type: String, default: "https://olalusgroupllc.com/about#contact" },
+    },
+
     careerPage: {
       heading: { type: String, default: "Wanna be apart of the family?" },
       subtext: { type: String, default: "" },
@@ -102,6 +111,7 @@ SiteContentSchema.statics.getAgentContext = async function () {
     services: (c.services || []).filter((s) => s.isActive).sort((a, b) => a.order - b.order),
     waiverPrograms: (c.waiverPrograms || []).filter((w) => w.isActive),
     faqs: (c.faqs || []).filter((f) => f.isActive).sort((a, b) => a.order - b.order),
+    websitePages: c.websitePages || {},
     careerPage: c.careerPage,
     resources: c.resources || [],
   };
@@ -169,6 +179,15 @@ SiteContentSchema.statics.seed = async function () {
       subtext: "We thank you for your interest in joining our staff. Olalus Community Healthcare Services is always in search of growth through people. To submit your application, please use the online form below.",
       applicationFormEnabled: true,
       pdfDownloadUrl: null,
+    },
+
+    websitePages: {
+      home:            "https://olalusgroupllc.com",
+      bookAppointment: "https://olalusgroupllc.com/#appointment",
+      hrApplication:   "https://olalusgroupllc.com/career/apply",
+      careers:         "https://olalusgroupllc.com/career",
+      services:        "https://olalusgroupllc.com/services",
+      contact:         "https://olalusgroupllc.com/about#contact",
     },
 
     resources: [

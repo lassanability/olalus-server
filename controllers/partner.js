@@ -9,7 +9,7 @@ const getImageUrl = (key) => {
 
 exports.getAll = async (req, res) => {
   try {
-    const partners = await Partner.find({ active: true }).sort({ order: 1, createdAt: 1 });
+    const partners = await Partner.find().sort({ createdAt: 1 });
     res.json({ success: true, data: partners });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -28,16 +28,14 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, order, active } = req.body;
+    const { name } = req.body;
     let logoUrl = '';
-
     if (req.file) {
       const key = `partners/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
       await storage.uploadFile(req.file.buffer, key, req.file.mimetype);
       logoUrl = getImageUrl(key);
     }
-
-    const partner = await Partner.create({ name, logo: logoUrl, order, active });
+    const partner = await Partner.create({ name, logo: logoUrl });
     res.status(201).json({ success: true, data: partner });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -49,10 +47,8 @@ exports.update = async (req, res) => {
     const partner = await Partner.findById(req.params.id);
     if (!partner) return res.status(404).json({ success: false, message: 'Partner not found' });
 
-    const { name, order, active } = req.body;
+    const { name } = req.body;
     if (name !== undefined) partner.name = name;
-    if (order !== undefined) partner.order = Number(order);
-    if (active !== undefined) partner.active = active === 'true' || active === true;
 
     if (req.file) {
       const key = `partners/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;

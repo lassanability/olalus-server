@@ -3,7 +3,7 @@ const Application = require('../models/application');
 
 exports.getAll = async (req, res) => {
   try {
-    const jobs = await Job.find({ active: true }).sort({ createdAt: -1 });
+    const jobs = await Job.find().sort({ createdAt: -1 });
     res.json({ success: true, data: jobs });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
