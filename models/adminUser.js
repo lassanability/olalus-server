@@ -14,6 +14,7 @@ const adminUserSchema = new mongoose.Schema({
   },
   isActive: { type: Boolean, default: true },
   passwordChangedFromDefault: { type: Boolean, default: false },
+  envManaged: { type: Boolean, default: false },
   lastLogin: { type: Date },
 }, { timestamps: true });
 

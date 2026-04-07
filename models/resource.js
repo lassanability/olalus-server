@@ -19,7 +19,6 @@ const resourceSchema = new mongoose.Schema({
     enum: ['client-form', 'service-guide', 'therapy-portal'],
     default: 'service-guide',
   },
-  order: { type: Number, default: 0 },
   active: { type: Boolean, default: true },
 }, { timestamps: true });
 

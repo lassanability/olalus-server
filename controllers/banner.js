@@ -28,7 +28,7 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { title, description, active, order } = req.body;
+    const { title, description, active } = req.body;
     let imageUrl = '';
 
     if (req.file) {
@@ -37,7 +37,7 @@ exports.create = async (req, res) => {
       imageUrl = getImageUrl(key);
     }
 
-    const banner = await Banner.create({ title, description, image: imageUrl, active, order });
+    const banner = await Banner.create({ title, description, image: imageUrl, active });
     res.status(201).json({ success: true, data: banner });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -49,11 +49,10 @@ exports.update = async (req, res) => {
     const banner = await Banner.findById(req.params.id);
     if (!banner) return res.status(404).json({ success: false, message: 'Banner not found' });
 
-    const { title, description, active, order } = req.body;
+    const { title, description, active } = req.body;
     if (title !== undefined) banner.title = title;
     if (description !== undefined) banner.description = description;
     if (active !== undefined) banner.active = active === 'true' || active === true;
-    if (order !== undefined) banner.order = Number(order);
 
     if (req.file) {
       const key = `banners/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;

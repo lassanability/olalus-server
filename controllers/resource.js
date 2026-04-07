@@ -38,8 +38,8 @@ exports.getBySlug = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { title, description, content, link, type, order, active } = req.body;
-    const resource = new Resource({ title, description, content, link, type, order, active });
+    const { title, description, content, link, type, active } = req.body;
+    const resource = new Resource({ title, description, content, link, type, active });
 
     if (req.file) {
       const key = `resources/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
@@ -59,13 +59,12 @@ exports.update = async (req, res) => {
     const resource = await Resource.findById(req.params.id);
     if (!resource) return res.status(404).json({ success: false, message: 'Resource not found' });
 
-    const { title, description, content, link, type, order, active } = req.body;
+    const { title, description, content, link, type, active } = req.body;
     if (title !== undefined) resource.title = title;
     if (description !== undefined) resource.description = description;
     if (content !== undefined) resource.content = content;
     if (link !== undefined) resource.link = link;
     if (type !== undefined) resource.type = type;
-    if (order !== undefined) resource.order = Number(order);
     if (active !== undefined) resource.active = active === 'true' || active === true;
 
     if (req.file) {

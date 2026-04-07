@@ -21,8 +21,8 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { question, answer, order, active } = req.body;
-    const faq = await FAQ.create({ question, answer, order, active });
+    const { question, answer, active } = req.body;
+    const faq = await FAQ.create({ question, answer, active });
     res.status(201).json({ success: true, data: faq });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -34,10 +34,9 @@ exports.update = async (req, res) => {
     const faq = await FAQ.findById(req.params.id);
     if (!faq) return res.status(404).json({ success: false, message: 'FAQ not found' });
 
-    const { question, answer, order, active } = req.body;
+    const { question, answer, active } = req.body;
     if (question !== undefined) faq.question = question;
     if (answer !== undefined) faq.answer = answer;
-    if (order !== undefined) faq.order = Number(order);
     if (active !== undefined) faq.active = active === 'true' || active === true;
 
     await faq.save();

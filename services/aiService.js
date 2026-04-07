@@ -141,13 +141,19 @@ async function checkAndAlert(budget) {
   }
 }
 
-function buildSystemPrompt(site, jobs) {
+function buildSystemPrompt(site, jobs, recentBlogs = [], activeResources = []) {
   const { company, contact, insuranceAccepted, services, faqs, websitePages = {} } = site;
   const a = contact.address;
   const addr = `${a.street}, ${a.suite}, ${a.city}, ${a.state} ${a.zip}`;
   const jobList = jobs.map((j, i) => `${i+1}. ${j.title} - ${j.type} | ${j.location}`).join("\n") || "None currently.";
   const svcList = services.map(s => `- ${s.name}: ${s.description}`).join("\n");
   const faqList = faqs.map(f => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n");
+  const blogList = recentBlogs.length
+    ? recentBlogs.map((b, i) => `${i+1}. "${b.title}" — ${b.category || "General"} | ${b.author || "Olalus Team"} | ${b.readTime || ""}`).join("\n")
+    : "No articles published yet.";
+  const resourceList = activeResources.length
+    ? activeResources.map(r => `- ${r.title} (${r.type}): ${r.description || ""}`).join("\n")
+    : "No resources listed yet.";
 
   return `YOU ARE: Olalus AI — the official virtual assistant for ${company.name}.
 You are NOT ChatGPT, not Google, not a generic AI. You are Olalus AI, period.
@@ -185,6 +191,12 @@ ${svcList}
 
 OPEN POSITIONS RIGHT NOW — ${jobs.length} total (EXACT LIST — DO NOT ADD TO THIS):
 ${jobList || "No open positions at this time."}
+
+RECENT BLOG ARTICLES (read-only context — do not invent articles not listed):
+${blogList}
+
+DOWNLOADABLE RESOURCES & GUIDES:
+${resourceList}
 
 FREQUENTLY ASKED QUESTIONS:
 ${faqList}
@@ -250,11 +262,11 @@ async function callAI(systemPrompt, messages, maxTokens) {
 }
 
 // ── Main: generate chat response ──
-async function generateResponse(userMessage, history, siteContent, activeJobs) {
+async function generateResponse(userMessage, history, siteContent, activeJobs, recentBlogs = [], activeResources = []) {
   try {
     const msgs = history.slice(-16).map(m => ({ role: m.role === "bot" ? "assistant" : "user", content: m.text }));
     msgs.push({ role: "user", content: userMessage });
-    const result = await callAI(buildSystemPrompt(siteContent, activeJobs), msgs);
+    const result = await callAI(buildSystemPrompt(siteContent, activeJobs, recentBlogs, activeResources), msgs);
     return { text: result.text, intent: detectIntent(userMessage), tokens: result.tokens, fallback: false };
   } catch (err) {
     console.error("AI error — using smart fallback:", err.message);
@@ -270,9 +282,14 @@ async function generateResponse(userMessage, history, siteContent, activeJobs) {
 // ── Resume matching ──
 async function matchResume(resumeText, activeJobs, siteContent) {
   try {
-    const jobDesc = activeJobs.map((j,i) =>
-      `JOB ${i+1}: ${j.title} | ${j.department} | ${j.location} | ${j.type}\nCerts: ${(j.certifications||[]).join(", ")||"N/A"}\nKeywords: ${(j.matchKeywords||[]).join(", ")}`
-    ).join("\n\n");
+    const jobDesc = activeJobs.map((j,i) => {
+      const keywords = (j.matchKeywords||[]).length
+        ? j.matchKeywords.join(", ")
+        : (j.requirements||[]).slice(0, 6).join("; ") || "N/A";
+      const certs = (j.certifications||[]).join(", ") || "N/A";
+      const desc = j.description ? `\nDescription: ${j.description.substring(0, 180)}` : "";
+      return `JOB ${i+1}: ${j.title} | ${j.location} | ${j.type}${desc}\nCerts: ${certs}\nKeywords: ${keywords}`;
+    }).join("\n\n");
 
     const sys = `You are Olalus AI, the career matching assistant for ${siteContent.company.name}. You ONLY match candidates against the positions listed below. Never suggest jobs that aren't listed. Respond ONLY with valid JSON, no markdown:\n{"summary":"1-2 sentence assessment of candidate fit for OUR open roles","matches":[{"jobIndex":0,"score":85,"reason":"why they fit THIS specific role at ${siteContent.company.name}"}],"tip":"1 sentence career advice specific to home healthcare"}\n\nOUR OPEN POSITIONS:\n${jobDesc}`;
     const result = await callAI(sys, [{ role: "user", content: `Resume:\n${resumeText.substring(0,3000)}` }], 600);
@@ -430,6 +447,12 @@ function keywordMatch(resume, jobs, site) {
     let s = 40;
     (j.matchKeywords||[]).forEach(k => { if(lower.includes(k)) s += 8; });
     (j.certifications||[]).forEach(c => { if(lower.includes(c.toLowerCase())) s += 10; });
+    // Fallback: score against requirements when no matchKeywords
+    if (!(j.matchKeywords||[]).length) {
+      (j.requirements||[]).forEach(r => {
+        r.toLowerCase().split(/\s+/).forEach(w => { if (w.length > 4 && lower.includes(w)) s += 3; });
+      });
+    }
     return { jobId: j._id, title: j.title, matchScore: Math.min(98, s), department: j.department, location: j.location, type: j.type, reason: "Matched based on your skills and certifications." };
   }).sort((a,b) => b.matchScore - a.matchScore);
 

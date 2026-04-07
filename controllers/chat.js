@@ -1,8 +1,28 @@
 const { v4: uuidv4 } = require("uuid");
 const Conversation = require("../models/Conversation");
-const AgentJob = require("../models/AgentJob");
+const Job = require("../models/job");
+const Blog = require("../models/blog");
+const Resource = require("../models/resource");
 const SiteContent = require("../models/SiteContent");
 const ai = require("../services/aiService");
+
+/** Format Job documents for the chat agent / AI service */
+function formatJobsForAgent(jobs) {
+  return jobs.map((job) => ({
+    jobId: job._id,
+    title: job.title,
+    department: job.type,
+    location: job.location || "See description",
+    type: job.type,
+    setting: null,
+    salary: null,
+    isFeatured: false,
+    description: job.description || "",
+    matchKeywords: [],
+    certifications: [],
+    requirements: job.requirements || [],
+  }));
+}
 
 exports.startChat = async (req, res) => {
   try {
@@ -18,7 +38,7 @@ exports.startChat = async (req, res) => {
       source: { page: req.body.page || null, referrer: req.body.referrer || null, utm: req.body.utm || {} },
     });
 
-    const activeJobs = await AgentJob.getJobsForAgent();
+    const activeJobs = formatJobsForAgent(await Job.find({ active: true }).lean());
 
     res.status(201).json({
       success: true,
@@ -57,14 +77,17 @@ exports.sendMessage = async (req, res) => {
     conversation.messages.push({ role: "user", text: message });
     conversation.lastActivityAt = new Date();
 
-    const [siteContent, activeJobs] = await Promise.all([
+    const [siteContent, rawJobs, recentBlogs, activeResources] = await Promise.all([
       SiteContent.getAgentContext(),
-      AgentJob.getJobsForAgent(),
+      Job.find({ active: true }).lean(),
+      Blog.find({ published: true }).sort({ publishedAt: -1 }).limit(8).select("title category author publishedAt readTime").lean(),
+      Resource.find({ active: true }).sort({ createdAt: 1 }).select("title description type").lean(),
     ]);
+    const activeJobs = formatJobsForAgent(rawJobs);
 
     let botResponse;
     if (ai.isConfigured()) {
-      const result = await ai.generateResponse(message, conversation.messages.slice(-20), siteContent, activeJobs);
+      const result = await ai.generateResponse(message, conversation.messages.slice(-20), siteContent, activeJobs, recentBlogs, activeResources);
       botResponse = result.text;
     } else {
       botResponse = ai.smartFallback(message, siteContent, activeJobs);
@@ -105,10 +128,11 @@ exports.submitResume = async (req, res) => {
     conversation.visitor.resumeText = resumeText;
     conversation.lastActivityAt = new Date();
 
-    const [siteContent, activeJobs] = await Promise.all([
+    const [siteContent, rawJobsForResume] = await Promise.all([
       SiteContent.getAgentContext(),
-      AgentJob.find({ isActive: true, $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] }).lean(),
+      Job.find({ active: true }).lean(),
     ]);
+    const activeJobs = formatJobsForAgent(rawJobsForResume);
 
     let result;
     if (ai.isConfigured()) {
@@ -145,7 +169,7 @@ exports.getChat = async (req, res) => {
 
 exports.getJobs = async (_req, res) => {
   try {
-    const jobs = await AgentJob.getJobsForAgent();
+    const jobs = formatJobsForAgent(await Job.find({ active: true }).lean());
     res.json({ success: true, data: jobs });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -155,8 +179,7 @@ exports.getJobs = async (_req, res) => {
 exports.seedAll = async (req, res) => {
   try {
     await SiteContent.seed();
-    await AgentJob.seedJobs();
-    const jobCount = await AgentJob.countDocuments();
+    const jobCount = await Job.countDocuments({ active: true });
     const content = await SiteContent.getContent();
 
     res.status(201).json({
@@ -176,7 +199,7 @@ exports.seedAll = async (req, res) => {
 };
 
 exports.healthCheck = async (_req, res) => {
-  const jobCount = await AgentJob.countDocuments({ isActive: true });
+  const jobCount = await Job.countDocuments({ active: true });
   const contentExists = !!(await SiteContent.findOne({ _key: "main" }));
   const budget = await ai.getBudgetStatus();
 

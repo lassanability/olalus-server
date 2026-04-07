@@ -4,7 +4,6 @@ const FAQItemSchema = new mongoose.Schema(
   {
     question: { type: String, required: true },
     answer: { type: String, required: true },
-    order: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
   },
   { _id: true }
@@ -16,7 +15,6 @@ const ServiceItemSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     icon: { type: String, default: null },
     isActive: { type: Boolean, default: true },
-    order: { type: Number, default: 0 },
   },
   { _id: true }
 );
@@ -108,9 +106,9 @@ SiteContentSchema.statics.getAgentContext = async function () {
     company: c.company,
     contact: c.contact,
     insuranceAccepted: c.insuranceAccepted || [],
-    services: (c.services || []).filter((s) => s.isActive).sort((a, b) => a.order - b.order),
+    services: (c.services || []).filter((s) => s.isActive),
     waiverPrograms: (c.waiverPrograms || []).filter((w) => w.isActive),
-    faqs: (c.faqs || []).filter((f) => f.isActive).sort((a, b) => a.order - b.order),
+    faqs: (c.faqs || []).filter((f) => f.isActive),
     websitePages: c.websitePages || {},
     careerPage: c.careerPage,
     resources: c.resources || [],
