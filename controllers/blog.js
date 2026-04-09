@@ -7,6 +7,16 @@ const getImageUrl = (key) => {
   return `${process.env.SEAWEED_S3_URL}/${process.env.SEAWEED_BUCKET}/${key}`;
 };
 
+const uploadFiles = async (files) => {
+  const urls = [];
+  for (const file of files) {
+    const key = `blog/${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.originalname.replace(/\s+/g, '-')}`;
+    await storage.uploadFile(file.buffer, key, file.mimetype);
+    urls.push(getImageUrl(key));
+  }
+  return urls;
+};
+
 exports.getAll = async (req, res) => {
   try {
     const { category, tag, search } = req.query;
@@ -79,18 +89,16 @@ exports.create = async (req, res) => {
   try {
     const { title, content, category, author, featured, published, publishedAt, tags, isIndexed, permanentPlacement, homepageVisibilityDays, doFollowLinks } = req.body;
 
-    let imageUrl = '';
-    if (req.file) {
-      const key = `blog/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
-      await storage.uploadFile(req.file.buffer, key, req.file.mimetype);
-      imageUrl = getImageUrl(key);
-    }
+    const imageUrls = req.files && req.files.length > 0 ? await uploadFiles(req.files) : [];
 
     const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags || [];
     const parsedDoFollow = typeof doFollowLinks === 'string' ? JSON.parse(doFollowLinks) : doFollowLinks;
 
     const blog = await Blog.create({
-      title, content, image: imageUrl, category, author,
+      title, content,
+      image: imageUrls[0] || '',
+      images: imageUrls,
+      category, author,
       featured: featured === 'true' || featured === true,
       published: published !== 'false' && published !== false,
       publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
@@ -127,10 +135,10 @@ exports.update = async (req, res) => {
     if (tags !== undefined) blog.tags = typeof tags === 'string' ? JSON.parse(tags) : tags;
     if (doFollowLinks !== undefined) blog.doFollowLinks = typeof doFollowLinks === 'string' ? JSON.parse(doFollowLinks) : doFollowLinks;
 
-    if (req.file) {
-      const key = `blog/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
-      await storage.uploadFile(req.file.buffer, key, req.file.mimetype);
-      blog.image = getImageUrl(key);
+    if (req.files && req.files.length > 0) {
+      const newUrls = await uploadFiles(req.files);
+      blog.image = newUrls[0];
+      blog.images = newUrls;
     }
 
     await blog.save();
