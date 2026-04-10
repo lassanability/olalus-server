@@ -54,9 +54,11 @@ exports.update = async (req, res) => {
       const key = `about/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
       await storage.uploadFile(req.file.buffer, key, req.file.mimetype);
       const url = getImageUrl(key);
-      if (imageField === 'missionImage') about.missionImage = url;
-      if (imageField === 'visionImage') about.visionImage = url;
-      if (imageField === 'appointmentAvatar') about.appointmentAvatar = url;
+      const validImageFields = ['overviewImage', 'missionImage', 'visionImage', 'appointmentAvatar'];
+      if (validImageFields.includes(imageField)) {
+        about[imageField] = url;
+        about.markModified(imageField);
+      }
     }
 
     await about.save();

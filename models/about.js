@@ -7,6 +7,7 @@ const branchSchema = new mongoose.Schema({
 }, { _id: false });
 
 const aboutSchema = new mongoose.Schema({
+  overviewImage: { type: String, default: '' },
   aboutHeading: { type: String, default: '' },
   introParagraph: { type: String, default: '' },
   checkItems: { type: [String], default: [] },
