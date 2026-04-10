@@ -27,6 +27,7 @@ const logRoute = require("./routes/log");
 const bannerRoute = require("./routes/banner");
 const serviceRoute = require("./routes/service");
 const waiverRoute = require("./routes/waiver");
+const waiverSectionRoute = require("./routes/waiverSection");
 const partnerRoute = require("./routes/partner");
 const testimonialRoute = require("./routes/testimonial");
 const faqRoute = require("./routes/faq");
@@ -38,6 +39,7 @@ const physicalExamRoute = require("./routes/physicalExam");
 const aboutRoute = require("./routes/about");
 const appointmentRoute = require("./routes/appointment");
 const chatRoute = require("./routes/chat");
+const policyRoute = require("./routes/policy");
 
 connectDB().then(() => initSuperAdmin());
 
@@ -61,6 +63,7 @@ app.use("/api/v1/logs", logRoute);
 
 app.use("/api/v1/banner", bannerRoute);
 app.use("/api/v1/services", serviceRoute);
+app.use("/api/v1/waiver/section", waiverSectionRoute);
 app.use("/api/v1/waiver", waiverRoute);
 app.use("/api/v1/partners", partnerRoute);
 app.use("/api/v1/testimonials", testimonialRoute);
@@ -74,6 +77,7 @@ app.use("/api/v1/physical-exam", physicalExamRoute);
 app.use("/api/v1/about", aboutRoute);
 app.use("/api/v1/appointments", appointmentRoute);
 app.use("/api/v1/chat", chatRoute);
+app.use("/api/v1/policies", policyRoute);
 
 app.get("/", (req, res) => {
   res.status(404).json({ error: "Not Found" });

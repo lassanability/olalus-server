@@ -1,4 +1,30 @@
 const Waiver = require('../models/waiver');
+const WaiverSection = require('../models/WaiverSection');
+
+exports.getSection = async (req, res) => {
+  try {
+    let section = await WaiverSection.findOne();
+    if (!section) section = await WaiverSection.create({});
+    res.json({ success: true, data: section });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.updateSection = async (req, res) => {
+  try {
+    let section = await WaiverSection.findOne();
+    if (!section) section = await WaiverSection.create({});
+    const { heading, description, programs } = req.body;
+    if (heading !== undefined) section.heading = heading;
+    if (description !== undefined) section.description = description;
+    if (programs !== undefined) section.programs = programs;
+    await section.save();
+    res.json({ success: true, data: section });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 exports.getAll = async (req, res) => {
   try {

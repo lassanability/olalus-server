@@ -7,10 +7,15 @@ const branchSchema = new mongoose.Schema({
 }, { _id: false });
 
 const aboutSchema = new mongoose.Schema({
-  missionHeading: { type: String, default: 'Our Goal For You' },
+  aboutHeading: { type: String, default: '' },
+  introParagraph: { type: String, default: '' },
+  checkItems: { type: [String], default: [] },
+  statsCareTakers: { type: String, default: '' },
+  statsYears: { type: String, default: '' },
+  missionHeading: { type: String, default: '' },
   missionParagraphs: { type: [String], default: [] },
   missionImage: { type: String, default: '' },
-  visionHeading: { type: String, default: 'Our Vision' },
+  visionHeading: { type: String, default: '' },
   visionBullets: { type: [String], default: [] },
   visionImage: { type: String, default: '' },
   branches: { type: [branchSchema], default: [] },

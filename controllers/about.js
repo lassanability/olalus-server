@@ -22,8 +22,15 @@ exports.update = async (req, res) => {
     let about = await About.findOne();
     if (!about) about = new About();
 
-    const { missionHeading, missionParagraphs, visionHeading, visionBullets, branches, appointmentFeatures, imageField } = req.body;
+    const { aboutHeading, introParagraph, checkItems, statsCareTakers, statsYears, missionHeading, missionParagraphs, visionHeading, visionBullets, branches, appointmentFeatures, imageField } = req.body;
 
+    if (aboutHeading !== undefined) about.aboutHeading = aboutHeading;
+    if (introParagraph !== undefined) about.introParagraph = introParagraph;
+    if (statsCareTakers !== undefined) about.statsCareTakers = statsCareTakers;
+    if (statsYears !== undefined) about.statsYears = statsYears;
+    if (checkItems !== undefined) {
+      about.checkItems = Array.isArray(checkItems) ? checkItems : JSON.parse(checkItems);
+    }
     if (missionHeading !== undefined) about.missionHeading = missionHeading;
     if (missionParagraphs !== undefined) {
       about.missionParagraphs = Array.isArray(missionParagraphs)
