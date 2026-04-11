@@ -4,6 +4,7 @@ const Job = require("../models/job");
 const Blog = require("../models/blog");
 const Resource = require("../models/resource");
 const SiteContent = require("../models/SiteContent");
+const About = require("../models/about");
 const ai = require("../services/aiService");
 
 /** Format Job documents for the chat agent / AI service */
@@ -77,17 +78,18 @@ exports.sendMessage = async (req, res) => {
     conversation.messages.push({ role: "user", text: message });
     conversation.lastActivityAt = new Date();
 
-    const [siteContent, rawJobs, recentBlogs, activeResources] = await Promise.all([
+    const [siteContent, rawJobs, recentBlogs, activeResources, aboutContent] = await Promise.all([
       SiteContent.getAgentContext(),
       Job.find({ active: true }).lean(),
-      Blog.find({ published: true }).sort({ publishedAt: -1 }).limit(8).select("title category author publishedAt readTime").lean(),
-      Resource.find({ active: true }).sort({ createdAt: 1 }).select("title description type").lean(),
+      Blog.find({ published: true }).sort({ publishedAt: -1 }).limit(8).select("title category author publishedAt readTime _id").lean(),
+      Resource.find({ active: true }).sort({ createdAt: 1 }).select("title description type url").lean(),
+      About.findOne().lean(),
     ]);
     const activeJobs = formatJobsForAgent(rawJobs);
 
     let botResponse;
     if (ai.isConfigured()) {
-      const result = await ai.generateResponse(message, conversation.messages.slice(-20), siteContent, activeJobs, recentBlogs, activeResources);
+      const result = await ai.generateResponse(message, conversation.messages.slice(-20), siteContent, activeJobs, recentBlogs, activeResources, aboutContent);
       botResponse = result.text;
     } else {
       botResponse = ai.smartFallback(message, siteContent, activeJobs);

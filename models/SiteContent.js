@@ -61,6 +61,10 @@ const SiteContentSchema = new mongoose.Schema(
       careers:         { type: String, default: "https://olalusgroupllc.com/career" },
       services:        { type: String, default: "https://olalusgroupllc.com/services" },
       contact:         { type: String, default: "https://olalusgroupllc.com/about#contact" },
+      about:           { type: String, default: "https://olalusgroupllc.com/about" },
+      faq:             { type: String, default: "https://olalusgroupllc.com/faq" },
+      blog:            { type: String, default: "https://olalusgroupllc.com/blog" },
+      resources:       { type: String, default: "https://olalusgroupllc.com/resources" },
     },
 
     careerPage: {
@@ -186,6 +190,10 @@ SiteContentSchema.statics.seed = async function () {
       careers:         "https://olalusgroupllc.com/career",
       services:        "https://olalusgroupllc.com/services",
       contact:         "https://olalusgroupllc.com/about#contact",
+      about:           "https://olalusgroupllc.com/about",
+      faq:             "https://olalusgroupllc.com/faq",
+      blog:            "https://olalusgroupllc.com/blog",
+      resources:       "https://olalusgroupllc.com/resources",
     },
 
     resources: [

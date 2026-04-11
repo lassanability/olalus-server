@@ -141,19 +141,24 @@ async function checkAndAlert(budget) {
   }
 }
 
-function buildSystemPrompt(site, jobs, recentBlogs = [], activeResources = []) {
-  const { company, contact, insuranceAccepted, services, faqs, websitePages = {} } = site;
+function buildSystemPrompt(site, jobs, recentBlogs = [], activeResources = [], aboutContent = null) {
+  const { company, contact, insuranceAccepted, services, faqs, websitePages = {}, waiverPrograms = [] } = site;
   const a = contact.address;
   const addr = `${a.street}, ${a.suite}, ${a.city}, ${a.state} ${a.zip}`;
   const jobList = jobs.map((j, i) => `${i+1}. ${j.title} - ${j.type} | ${j.location}`).join("\n") || "None currently.";
   const svcList = services.map(s => `- ${s.name}: ${s.description}`).join("\n");
   const faqList = faqs.map(f => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n");
   const blogList = recentBlogs.length
-    ? recentBlogs.map((b, i) => `${i+1}. "${b.title}" — ${b.category || "General"} | ${b.author || "Olalus Team"} | ${b.readTime || ""}`).join("\n")
+    ? recentBlogs.map((b) => `- "${b.title}" — ${b.category || "General"} | ${websitePages.blog ? `${websitePages.blog}/${b._id}` : ""}`).join("\n")
     : "No articles published yet.";
   const resourceList = activeResources.length
-    ? activeResources.map(r => `- ${r.title} (${r.type}): ${r.description || ""}`).join("\n")
+    ? activeResources.map(r => `- ${r.title} (${r.type}): ${r.description || ""}${r.url ? ` — ${r.url}` : ""}`).join("\n")
     : "No resources listed yet.";
+  const waiverList = waiverPrograms.length
+    ? waiverPrograms.map(w => `- ${w.name}${w.description ? `: ${w.description}` : ""}`).join("\n")
+    : "No waiver programs listed.";
+  const aboutMission = aboutContent?.missionHeading ? `${aboutContent.missionHeading}: ${(aboutContent.missionParagraphs || []).join(" ")}` : (company.mission || "");
+  const aboutVision = aboutContent?.visionHeading && aboutContent?.visionBullets?.length ? `${aboutContent.visionHeading}: ${aboutContent.visionBullets.join("; ")}` : "";
 
   return `YOU ARE: Olalus AI — the official virtual assistant for ${company.name}.
 You are NOT ChatGPT, not Google, not a generic AI. You are Olalus AI, period.
@@ -174,7 +179,8 @@ COMPANY:
 ${company.description}
 Experience: ${company.yearsExperience}+ years | Staff: ${company.totalCareTakers}+ care takers
 Tagline: "${company.tagline}"
-Mission: ${company.mission}
+Mission: ${aboutMission}
+${aboutVision ? `Vision: ${aboutVision}` : ""}
 
 CONTACT:
 Phone: ${contact.phone}
@@ -201,13 +207,20 @@ ${resourceList}
 FREQUENTLY ASKED QUESTIONS:
 ${faqList}
 
+WAIVER PROGRAMS:
+${waiverList}
+
 WEBSITE PAGES (use these exact links when directing visitors):
-- Book an Appointment: ${websitePages.bookAppointment || contact.phone}
-- HR / Job Application Form: ${websitePages.hrApplication || contact.phone}
-- Careers Page: ${websitePages.careers || contact.phone}
-- Our Services: ${websitePages.services || contact.phone}
-- Contact Us: ${websitePages.contact || contact.phone}
 - Homepage: ${websitePages.home || contact.phone}
+- About Us: ${websitePages.about || contact.phone}
+- Our Services: ${websitePages.services || contact.phone}
+- Book an Appointment: ${websitePages.bookAppointment || contact.phone}
+- FAQs: ${websitePages.faq || contact.phone}
+- Blog / Articles: ${websitePages.blog || contact.phone}
+- Resources & Guides: ${websitePages.resources || contact.phone}
+- Careers Page: ${websitePages.careers || contact.phone}
+- HR / Job Application Form: ${websitePages.hrApplication || contact.phone}
+- Contact Us: ${websitePages.contact || contact.phone}
 
 ════════════════════════════════════════
 ANTI-HALLUCINATION RULES — NON-NEGOTIABLE
@@ -221,8 +234,12 @@ ANTI-HALLUCINATION RULES — NON-NEGOTIABLE
 7. Emergencies: ALWAYS respond first with "Please call 911 immediately." Then: "For urgent care coordination, call us at ${contact.phone}."
 8. Appointments: always give the direct booking link — ${websitePages.bookAppointment || contact.phone}
 9. Job applications / HR form: always give the direct link — ${websitePages.hrApplication || contact.phone}
-10. When listing services or positions, copy them EXACTLY as listed above — no paraphrasing, no additions.
-11. If someone pastes a resume, match it ONLY against the open positions listed above. Never mention jobs not on the list.`;
+10. FAQs: direct to ${websitePages.faq || contact.phone}
+11. Blog articles: direct to ${websitePages.blog || contact.phone}
+12. Resources & guides: direct to ${websitePages.resources || contact.phone}
+13. About the company: direct to ${websitePages.about || contact.phone}
+14. When listing services or positions, copy them EXACTLY as listed above — no paraphrasing, no additions.
+15. If someone pastes a resume, match it ONLY against the open positions listed above. Never mention jobs not on the list.`;
 }
 
 async function callAI(systemPrompt, messages, maxTokens) {
@@ -262,11 +279,11 @@ async function callAI(systemPrompt, messages, maxTokens) {
 }
 
 // ── Main: generate chat response ──
-async function generateResponse(userMessage, history, siteContent, activeJobs, recentBlogs = [], activeResources = []) {
+async function generateResponse(userMessage, history, siteContent, activeJobs, recentBlogs = [], activeResources = [], aboutContent = null) {
   try {
     const msgs = history.slice(-16).map(m => ({ role: m.role === "bot" ? "assistant" : "user", content: m.text }));
     msgs.push({ role: "user", content: userMessage });
-    const result = await callAI(buildSystemPrompt(siteContent, activeJobs, recentBlogs, activeResources), msgs);
+    const result = await callAI(buildSystemPrompt(siteContent, activeJobs, recentBlogs, activeResources, aboutContent), msgs);
     return { text: result.text, intent: detectIntent(userMessage), tokens: result.tokens, fallback: false };
   } catch (err) {
     console.error("AI error — using smart fallback:", err.message);
