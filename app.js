@@ -40,6 +40,7 @@ const aboutRoute = require("./routes/about");
 const appointmentRoute = require("./routes/appointment");
 const chatRoute = require("./routes/chat");
 const policyRoute = require("./routes/policy");
+const contactInfoRoute = require("./routes/contactInfo");
 
 connectDB().then(() => initSuperAdmin());
 
@@ -78,6 +79,7 @@ app.use("/api/v1/about", aboutRoute);
 app.use("/api/v1/appointments", appointmentRoute);
 app.use("/api/v1/chat", chatRoute);
 app.use("/api/v1/policies", policyRoute);
+app.use("/api/v1/contact-info", contactInfoRoute);
 
 app.get("/", (req, res) => {
   res.status(404).json({ error: "Not Found" });
