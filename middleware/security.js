@@ -193,12 +193,27 @@ const trackSuspiciousActivity = (req, res, next) => {
   next();
 };
 
+const parseAllowedOrigins = (website, adminDashboard) => {
+  const base = [website, adminDashboard].filter(Boolean);
+  try {
+    const extra = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+    return [...new Set([...base, ...extra])];
+  } catch (_) {
+    return base;
+  }
+};
+
 const buildCorsOptions = (website, adminDashboard) => ({
   origin: (origin, callback) => {
-    const allowedOrigins = [
-      website,
-      adminDashboard,
-    ].filter(Boolean);
+    let allowedOrigins;
+    try {
+      allowedOrigins = parseAllowedOrigins(website, adminDashboard);
+    } catch (_) {
+      allowedOrigins = [website, adminDashboard].filter(Boolean);
+    }
 
     const isLocalhost = !origin || /^https?:\/\/localhost(:\d+)?$/.test(origin);
     if (isLocalhost || allowedOrigins.includes(origin)) {
