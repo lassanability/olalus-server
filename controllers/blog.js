@@ -1,5 +1,7 @@
 const Blog = require('../models/blog');
 const storage = require('../config/storage');
+const Subscriber = require('../models/subscriber');
+const { sendNewsletterEmails } = require('../helpers/email');
 
 const getImageUrl = (key) => {
   if (!key) return null;
@@ -108,6 +110,18 @@ exports.create = async (req, res) => {
       homepageVisibilityDays: Number(homepageVisibilityDays) || 0,
       doFollowLinks: parsedDoFollow,
     });
+
+    if (blog.published) {
+      Subscriber.find().then(subscribers => {
+        if (subscribers.length === 0) return;
+        const emails = subscribers.map(s => s.email);
+        const subject = `New Post: ${blog.title}`;
+        const message = `We just published a new ${blog.category || 'health'} article: "${blog.title}".\n\nVisit our website to read the full post and stay informed on the latest from Olalus Group LLC.`;
+        sendNewsletterEmails(emails, subject, message).catch(err =>
+          console.error('[email] blog newsletter error:', err.message)
+        );
+      }).catch(err => console.error('[newsletter] subscriber fetch error:', err.message));
+    }
 
     res.status(201).json({ success: true, blog });
   } catch (err) {

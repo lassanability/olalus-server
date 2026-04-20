@@ -36,6 +36,7 @@ const jobRoute = require("./routes/job");
 const resourceRoute = require("./routes/resource");
 const blogRoute = require("./routes/blog");
 const contactRoute = require("./routes/contact");
+const newsletterRoute = require("./routes/newsletter");
 const physicalExamRoute = require("./routes/physicalExam");
 const aboutRoute = require("./routes/about");
 const appointmentRoute = require("./routes/appointment");
@@ -81,6 +82,7 @@ app.use("/api/v1/appointments", appointmentRoute);
 app.use("/api/v1/chat", chatRoute);
 app.use("/api/v1/policies", policyRoute);
 app.use("/api/v1/contact-info", contactInfoRoute);
+app.use("/api/v1/newsletter", newsletterRoute);
 
 app.get("/", (req, res) => {
   res.status(404).json({ error: "Not Found" });

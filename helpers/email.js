@@ -255,6 +255,16 @@ exports.deleteAccountEmail = async (email, username, details) => {
   });
 };
 
+exports.sendSubscriptionConfirmationEmail = async (email) => {
+  const username = email.split('@')[0];
+  return sendTemplatedEmail({
+    to: email,
+    subject: "You're Subscribed — Olalus Group LLC",
+    templatePath: path.join(__dirname, '../client/subscribeConfirmation.html'),
+    replacements: { ...baseReplacements(), username },
+  });
+};
+
 exports.sendJobApplicationEmail = async (email, firstName, lastName, position) => {
   return sendTemplatedEmail({
     to: email,
