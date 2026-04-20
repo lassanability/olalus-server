@@ -24,7 +24,6 @@ const emailTransporter = () => {
     },
     tls: {
       rejectUnauthorized: false,
-      ciphers: 'SSLv3',
     },
     connectionTimeout: 30000,
     greetingTimeout: 30000,
