@@ -1,5 +1,6 @@
 const Job = require('../models/job');
 const Application = require('../models/application');
+const { sendJobApplicationEmail, sendJobApplicationAdminEmail } = require('../helpers/email');
 
 exports.getAll = async (req, res) => {
   try {
@@ -80,6 +81,13 @@ exports.apply = async (req, res) => {
       personalInfo, employmentDesired, education, workExperience,
       additionalQuestions, references, waiver,
     });
+
+    sendJobApplicationEmail(email, firstName, lastName, position).catch(err =>
+      console.error('[email] job application applicant email error:', err.message)
+    );
+    sendJobApplicationAdminEmail({ firstName, lastName, email, phone, position, message }).catch(err =>
+      console.error('[email] job application admin email error:', err.message)
+    );
 
     res.status(201).json({ success: true, message: 'Application submitted successfully', data: application });
   } catch (err) {

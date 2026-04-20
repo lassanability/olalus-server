@@ -1,4 +1,5 @@
 const Contact = require('../models/contact');
+const { contactEmail } = require('../helpers/email');
 
 exports.submit = async (req, res) => {
   try {
@@ -7,6 +8,9 @@ exports.submit = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, email and message are required' });
     }
     const contact = await Contact.create({ name, email, phone, subject, message });
+    contactEmail(email, name, message, subject || 'General Inquiry').catch(err =>
+      console.error('[email] contact email error:', err.message)
+    );
     res.status(201).json({ success: true, message: 'Message sent successfully', data: contact });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

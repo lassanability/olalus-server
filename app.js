@@ -8,6 +8,7 @@ const REQUIRED_ENV = [
   'PORT', 'MONGO_CONNECTION_URL',
   'SEAWEED_S3_URL', 'SEAWEED_BUCKET', 'SEAWEED_ACCESS_KEY', 'SEAWEED_SECRET_KEY',
   'JWT_SECRET', 'ADMIN_EMAIL',
+  'EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASS',
 ];
 const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missingEnv.length > 0) {

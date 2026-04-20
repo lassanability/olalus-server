@@ -1,4 +1,5 @@
 const Appointment = require('../models/appointment');
+const { sendAppointmentConfirmationEmail, sendAppointmentAdminEmail } = require('../helpers/email');
 
 exports.submit = async (req, res) => {
   try {
@@ -7,6 +8,12 @@ exports.submit = async (req, res) => {
       return res.status(400).json({ success: false, message: 'First name, last name and email are required' });
     }
     const appointment = await Appointment.create({ firstName, lastName, email, phone, serviceType, dateTime, message, type });
+    sendAppointmentConfirmationEmail({ firstName, lastName, email, serviceType, dateTime, type }).catch(err =>
+      console.error('[email] appointment confirmation email error:', err.message)
+    );
+    sendAppointmentAdminEmail({ firstName, lastName, email, phone, serviceType, dateTime, message, type }).catch(err =>
+      console.error('[email] appointment admin email error:', err.message)
+    );
     res.status(201).json({ success: true, message: 'Appointment submitted successfully', data: appointment });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

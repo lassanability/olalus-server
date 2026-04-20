@@ -3,50 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>New Contact Form Submission</title>
+<title>New Contact Form Submission — Olalus Group LLC</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #F7F8F8; margin: 0; padding: 20px; }
-  .container { max-width: 600px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
-  .header { padding: 30px 25px; text-align: center; background-color: #1C2B1C; border-bottom: 3px solid #A1CE50; }
-  .logo { font-size: 32px; font-weight: 800; color: #A1CE50; letter-spacing: 4px; margin: 0; }
-  .logo-sub { font-size: 11px; color: #B1F537; letter-spacing: 2px; margin: 6px 0 0; opacity: 0.85; }
-  .content { padding: 36px 35px; background-color: #FFFFFF; }
-  .info-box { background-color: #F0F7E6; border-radius: 8px; padding: 22px 24px; margin: 22px 0; border-left: 4px solid #A1CE50; }
-  .info-box h2 { color: #1C2B1C; margin: 0 0 10px; font-size: 20px; font-weight: 700; }
-  .meta-row { display: flex; margin: 8px 0; font-size: 14px; }
-  .meta-label { font-weight: 600; color: #1C2B1C; min-width: 80px; }
-  .meta-value { color: #2D2D2D; }
-  .message-box { background-color: #F7F8F8; border-radius: 6px; padding: 16px 18px; margin-top: 16px; border: 1px solid #E5EDD5; font-size: 15px; color: #2D2D2D; line-height: 1.7; white-space: pre-wrap; }
-  p { line-height: 1.7; color: #2D2D2D; margin: 14px 0; font-size: 15px; }
-  hr { border: none; border-top: 1px solid #E5EDD5; margin: 24px 0; }
-  .sign-off strong { color: #A1CE50; }
-  .footer { padding: 22px 25px; background-color: #F7F8F8; text-align: center; border-top: 1px solid #E5EDD5; }
-  .footer p { color: #6B7280; font-size: 12px; margin: 5px 0; }
-  .footer a { color: #A1CE50; text-decoration: none; }
+  body { font-family: Arial, Helvetica, sans-serif; background-color: #f5f6f8; margin: 0; padding: 20px; }
+  .container { max-width: 600px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+  .header { padding: 30px 25px; text-align: center; background-color: #111827; border-bottom: 3px solid #d19e1d; }
+  .logo { width: 110px; height: auto; display: block; margin: 0 auto 12px; }
+  .tagline { color: #ffd86e; font-size: 11px; letter-spacing: 1.5px; margin: 0; text-transform: uppercase; }
+  .content { padding: 36px 35px; background-color: #ffffff; }
+  h2 { color: #111827; margin: 0 0 20px; font-size: 22px; font-weight: 700; }
+  p { line-height: 1.7; color: #374151; margin: 14px 0; font-size: 15px; }
+  .info-box { background-color: #f9fafb; border-radius: 8px; padding: 22px 24px; margin: 22px 0; }
+  .info-row { padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: #6b7280; font-size: 13px; font-weight: 600; display: inline-block; min-width: 100px; vertical-align: top; }
+  .info-value { color: #111827; font-size: 14px; font-weight: 500; display: inline-block; }
+  .subject-badge { display: inline-block; background: linear-gradient(120deg, #d19e1d, #ffd86e); color: #111827; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .message-box { background-color: #fff8e1; border-left: 4px solid #d19e1d; border-radius: 8px; padding: 22px 24px; margin: 22px 0; }
+  .message-box h3 { color: #111827; margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+  .message-box p { margin: 0; color: #374151; white-space: pre-wrap; word-break: break-word; font-size: 14px; }
+  .divider { height: 2px; background: linear-gradient(90deg, transparent, #d19e1d, transparent); margin: 20px 0; }
+  .footer { padding: 24px 25px; background-color: #f5f6f8; text-align: center; border-top: 1px solid #e5e7eb; }
+  .footer p { color: #6b7280; font-size: 12px; margin: 5px 0; }
+  .footer a { color: #d19e1d; text-decoration: none; }
 </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <p class="logo">OLALUS</p>
-      <p class="logo-sub">YOUR HEALTH JOURNEY STARTS HERE</p>
+      <img src="https://olalusgroupllc.com/assets/logo.png" alt="Olalus Group LLC" class="logo">
+      <p class="tagline">Admin Notification</p>
     </div>
     <div class="content">
-      <p>A new message was submitted via the Olalus contact form.</p>
+      <h2>New Contact Form Submission</h2>
+      <p>A visitor has submitted the contact form on the Olalus Group LLC website.</p>
       <div class="info-box">
-        <h2>{{subject}}</h2>
-        <div class="meta-row"><span class="meta-label">From:</span><span class="meta-value">{{username}}</span></div>
-        <div class="meta-row"><span class="meta-label">Email:</span><span class="meta-value"><a href="mailto:{{email}}" style="color: #A1CE50;">{{email}}</a></span></div>
-        <div class="message-box">{{message}}</div>
+        <div class="info-row">
+          <span class="info-label">From:</span>
+          <span class="info-value">{{username}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email:</span>
+          <span class="info-value"><a href="mailto:{{email}}" style="color: #d19e1d;">{{email}}</a></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Subject:</span>
+          <span class="info-value"><span class="subject-badge">{{subject}}</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Date:</span>
+          <span class="info-value">{{date}}</span>
+        </div>
       </div>
-      <p>Reply directly to <a href="mailto:{{email}}" style="color: #A1CE50;">{{email}}</a> to respond to this user.</p>
-      <hr>
-      <p class="sign-off"><strong>Olalus Contact System</strong></p>
+      <div class="message-box">
+        <h3>Message:</h3>
+        <p>{{message}}</p>
+      </div>
+      <p style="color: #6b7280; font-size: 13px;">This is an automated notification from the Olalus Group LLC contact form.</p>
     </div>
     <div class="footer">
-      <p><a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
-      <p>This email was generated by the Olalus contact form.</p>
-      <p>&copy; 2025 Olalus. All rights reserved.</p>
+      <div class="divider"></div>
+      <p>&copy; 2026 Olalus Group LLC. All rights reserved.</p>
     </div>
   </div>
 </body>

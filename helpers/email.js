@@ -2,10 +2,11 @@ const nodemailer = require("nodemailer");
 const path = require('path');
 const fs = require('fs');
 
-const EMAIL_FROM = process.env.Email;
+const EMAIL_FROM = process.env.EMAIL_USER;
 const WEBSITE_URL = process.env.WEBSITE || '';
 const API_URL = process.env.API_URL || '';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || EMAIL_FROM;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || EMAIL_FROM;
 
 const baseReplacements = () => ({
   websiteUrl: WEBSITE_URL,
@@ -14,13 +15,16 @@ const baseReplacements = () => ({
 
 const emailTransporter = () => {
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
     secure: true,
     auth: {
-      user: EMAIL_FROM,
-      pass: process.env.EMAIL_PASSWORD,
-    }
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 };
 
@@ -49,7 +53,7 @@ const sendTemplatedEmail = async (options) => {
   });
 
   const mailOptions = {
-    from: EMAIL_FROM,
+    from: `"Olalus Group LLC" <${EMAIL_FROM}>`,
     to,
     subject,
     html: template,
@@ -67,9 +71,9 @@ exports.sendWelcomeEmail = async (email, username) => {
 
   return sendTemplatedEmail({
     to: email,
-    subject: 'Welcome to Olalus Community Healthcare Services',
+    subject: 'Welcome to Olalus Group LLC',
     templatePath: path.join(__dirname, '../client/welcome.html'),
-    replacements: { ...baseReplacements(), username }
+    replacements: { ...baseReplacements(), username },
   });
 };
 
@@ -80,9 +84,9 @@ exports.sendVerificationCodeEmail = async (email, username, verificationCode) =>
 
   return sendTemplatedEmail({
     to: email,
-    subject: 'Your Verification Code',
+    subject: 'Your Verification Code — Olalus Group LLC',
     templatePath: path.join(__dirname, '../client/verification.html'),
-    replacements: { ...baseReplacements(), username, verificationCode }
+    replacements: { ...baseReplacements(), username, verificationCode },
   });
 };
 
@@ -91,18 +95,18 @@ exports.sendPasswordResetEmail = async (username, email, resetToken) => {
 
   return sendTemplatedEmail({
     to: email,
-    subject: 'Password Reset Request',
+    subject: 'Password Reset Request — Olalus Group LLC',
     templatePath: path.join(__dirname, '../client/passwordEmailReset.html'),
-    replacements: { ...baseReplacements(), username, resetUrl: deepLink }
+    replacements: { ...baseReplacements(), username, resetUrl: deepLink },
   });
 };
 
 exports.sendResetSucessfulEmail = async (username, email) => {
   return sendTemplatedEmail({
     to: email,
-    subject: 'Password Reset Successful',
+    subject: 'Password Reset Successful — Olalus Group LLC',
     templatePath: path.join(__dirname, '../client/passwordResetSuccesful.html'),
-    replacements: { ...baseReplacements(), username }
+    replacements: { ...baseReplacements(), username },
   });
 };
 
@@ -111,11 +115,20 @@ exports.contactEmail = async (email, username, message, subject = 'Contact Us') 
     throw new Error('Email, username and message are required to send a contact email.');
   }
 
-  return sendTemplatedEmail({
-    to: EMAIL_FROM,
+  const date = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+
+  await sendTemplatedEmail({
+    to: ADMIN_EMAIL,
     subject: `Contact Form: ${subject}`,
     templatePath: path.join(__dirname, '../client/contact.html'),
-    replacements: { ...baseReplacements(), username, email, message, subject }
+    replacements: { ...baseReplacements(), username, email, message, subject, date },
+  });
+
+  return sendTemplatedEmail({
+    to: email,
+    subject: 'We Received Your Message — Olalus Group LLC',
+    templatePath: path.join(__dirname, '../client/contactAutoReply.html'),
+    replacements: { ...baseReplacements(), username, subject },
   });
 };
 
@@ -144,7 +157,12 @@ exports.sendNewsletterEmails = async (emails, subject, message) => {
         const username = email.split('@')[0];
         const personalizedTemplate = applyReplacements(template, { username, message, subject });
 
-        return transporter.sendMail({ from: EMAIL_FROM, to: email, subject, html: personalizedTemplate });
+        return transporter.sendMail({
+          from: `"Olalus Group LLC" <${EMAIL_FROM}>`,
+          to: email,
+          subject,
+          html: personalizedTemplate,
+        });
       });
 
       const results = await Promise.all(promises);
@@ -159,7 +177,12 @@ exports.sendNewsletterEmails = async (emails, subject, message) => {
   } else {
     const username = emails.split('@')[0];
     const personalizedTemplate = applyReplacements(template, { username, message, subject });
-    const result = await transporter.sendMail({ from: EMAIL_FROM, to: emails, subject, html: personalizedTemplate });
+    const result = await transporter.sendMail({
+      from: `"Olalus Group LLC" <${EMAIL_FROM}>`,
+      to: emails,
+      subject,
+      html: personalizedTemplate,
+    });
     if (result.accepted && result.accepted.length > 0) {
       successfulEmails.push(result.accepted[0]);
     }
@@ -175,9 +198,9 @@ exports.sendHealthReminderEmail = async (email, username, message) => {
 
   return sendTemplatedEmail({
     to: email,
-    subject: 'A Reminder from Olalus Community Healthcare Services',
+    subject: 'A Health Reminder from Olalus Group LLC',
     templatePath: path.join(__dirname, '../client/remainder.html'),
-    replacements: { ...baseReplacements(), username, message }
+    replacements: { ...baseReplacements(), username, message },
   });
 };
 
@@ -187,11 +210,11 @@ exports.sendAdminEmail = async (email, username, makeAdmin) => {
   }
 
   const emailData = {
-    title: makeAdmin ? 'Welcome New Admin' : 'Admin Access Removed',
+    title: makeAdmin ? 'Welcome, New Admin' : 'Admin Access Removed',
     message: makeAdmin
-      ? 'You now have admin privileges. Access the admin panel to manage site features.'
+      ? 'You have been granted admin privileges. Log in to the admin dashboard to manage site features.'
       : 'Your admin access has been revoked. You no longer have access to admin features.',
-    subject: makeAdmin ? 'Admin Access Granted' : 'Admin Access Removed'
+    subject: makeAdmin ? 'Admin Access Granted — Olalus Group LLC' : 'Admin Access Removed — Olalus Group LLC',
   };
 
   return sendTemplatedEmail({
@@ -202,33 +225,108 @@ exports.sendAdminEmail = async (email, username, makeAdmin) => {
       ...baseReplacements(),
       username,
       title: emailData.title,
-      message: emailData.message
-    }
+      message: emailData.message,
+    },
   });
 };
 
 exports.deleteAccountEmail = async (email, username, details) => {
   const subject = details.deletedByAdmin
     ? 'Your Account Has Been Deleted by Administrator'
-    : 'Account Deletion Successful';
+    : 'Account Deletion Confirmed — Olalus Group LLC';
 
-  const deletionDate = new Date(details.deletionDate).toLocaleString();
+  const deletionDate = new Date(details.deletionDate).toLocaleString('en-US', { timeZone: 'America/New_York' });
 
   let message = '';
   if (details.deletedByAdmin) {
-    message += `Your account has been deleted by an administrator on ${deletionDate}.`;
+    message += `Your account was deleted by an administrator on ${deletionDate}.`;
     if (details.bulkDeletion) {
-      message += '\nThis action was part of a bulk account cleanup process.';
+      message += ' This action was part of a bulk account cleanup process.';
     }
   } else {
-    message += `As requested, your account has been successfully deleted on ${deletionDate}.`;
+    message += `As requested, your account was successfully deleted on ${deletionDate}.`;
   }
 
   return sendTemplatedEmail({
     to: email,
     subject,
     templatePath: path.join(__dirname, '../client/accountDeleted.html'),
-    replacements: { ...baseReplacements(), username, message }
+    replacements: { ...baseReplacements(), username, message },
+  });
+};
+
+exports.sendJobApplicationEmail = async (email, firstName, lastName, position) => {
+  return sendTemplatedEmail({
+    to: email,
+    subject: 'Application Received — Olalus Group LLC',
+    templatePath: path.join(__dirname, '../client/jobApplication.html'),
+    replacements: { ...baseReplacements(), firstName, lastName, position },
+  });
+};
+
+exports.sendJobApplicationAdminEmail = async (data) => {
+  const { firstName, lastName, email, phone, position, message } = data;
+
+  return sendTemplatedEmail({
+    to: ADMIN_EMAIL,
+    subject: `New Job Application: ${position}`,
+    templatePath: path.join(__dirname, '../client/jobApplicationAdmin.html'),
+    replacements: {
+      ...baseReplacements(),
+      firstName,
+      lastName,
+      email,
+      phone: phone || 'Not provided',
+      position,
+      message: message || 'No message provided',
+      date: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
+    },
+  });
+};
+
+exports.sendAppointmentConfirmationEmail = async (data) => {
+  const { firstName, lastName, email, serviceType, dateTime, type } = data;
+  const formattedDate = dateTime
+    ? new Date(dateTime).toLocaleString('en-US', { timeZone: 'America/New_York' })
+    : 'To be confirmed';
+
+  return sendTemplatedEmail({
+    to: email,
+    subject: `${type === 'consultation' ? 'Consultation' : 'Appointment'} Request Received — Olalus Group LLC`,
+    templatePath: path.join(__dirname, '../client/appointmentConfirmation.html'),
+    replacements: {
+      ...baseReplacements(),
+      firstName,
+      lastName,
+      serviceType: serviceType || 'General',
+      dateTime: formattedDate,
+      type: type === 'consultation' ? 'Consultation' : 'Appointment',
+    },
+  });
+};
+
+exports.sendAppointmentAdminEmail = async (data) => {
+  const { firstName, lastName, email, phone, serviceType, dateTime, message, type } = data;
+  const formattedDate = dateTime
+    ? new Date(dateTime).toLocaleString('en-US', { timeZone: 'America/New_York' })
+    : 'Not specified';
+
+  return sendTemplatedEmail({
+    to: ADMIN_EMAIL,
+    subject: `New ${type === 'consultation' ? 'Consultation' : 'Appointment'} Request: ${firstName} ${lastName}`,
+    templatePath: path.join(__dirname, '../client/appointmentAdmin.html'),
+    replacements: {
+      ...baseReplacements(),
+      firstName,
+      lastName,
+      email,
+      phone: phone || 'Not provided',
+      serviceType: serviceType || 'General',
+      dateTime: formattedDate,
+      message: message || 'No message provided',
+      type: type === 'consultation' ? 'Consultation' : 'Appointment',
+      date: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
+    },
   });
 };
 
