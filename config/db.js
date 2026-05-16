@@ -18,16 +18,27 @@ async function connectDB() {
 async function deleteAllData() {
     try {
         if (!mongoose.connection || !mongoose.connection.db) {
+            console.log('[-] No active MongoDB connection');
             return false;
         }
 
+        const collections = await mongoose.connection.db.listCollections().toArray();
+
+        await Promise.all(
+            collections.map(({ name }) =>
+                mongoose.connection.db.collection(name).deleteMany({})
+            )
+        );
+
+        console.log(`[+] Cleared ${collections.length} collection(s)`);
         return true;
     } catch (err) {
-        console.log(`MongoDB deletion error: ${err.message}`);
+        console.log(`[-] MongoDB deletion error: ${err.message}`);
         return false;
     }
 }
 
+await connectDB();
+await deleteAllData();
 
-
-module.exports = { connectDB, deleteAllData }
+module.exports = { connectDB, deleteAllData };
