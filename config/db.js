@@ -38,7 +38,4 @@ async function deleteAllData() {
     }
 }
 
-await connectDB();
-await deleteAllData();
-
 module.exports = { connectDB, deleteAllData };
